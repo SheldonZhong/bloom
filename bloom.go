@@ -200,11 +200,18 @@ func (f *BloomFilter) TestString(data string) bool {
 // otherwise.
 func (f *BloomFilter) TestLocations(locs []uint64) bool {
 	for i := 0; i < len(locs); i++ {
-		if !f.b.Test(uint(locs[i] % uint64(f.m))) {
+		if !f.TestLocation(locs[i]) {
 			return false
 		}
 	}
 	return true
+}
+
+func (f *BloomFilter) TestLocation(loc uint64) bool {
+	if f.b.Test(uint(loc % uint64(f.m))) {
+		return true
+	}
+	return false
 }
 
 // TestAndAdd is the equivalent to calling Test(data) then Add(data).
@@ -220,6 +227,37 @@ func (f *BloomFilter) TestAndAdd(data []byte) bool {
 		f.b.Set(l)
 	}
 	return present
+}
+
+func (f *BloomFilter) Count() uint {
+	return f.b.Count()
+}
+
+// https://en.wikipedia.org/wiki/Bloom_filter#Approximating_the_number_of_items_in_a_Bloom_filter
+func (f *BloomFilter) EstimateItems() uint {
+	if f.b.All() {
+		return 0
+	}
+	m := float64(f.m)
+	k := float64(f.k)
+	cnt := float64(f.Count())
+	n := -m / k * math.Log(1-cnt/m)
+	return uint(math.Round(n))
+}
+
+// https://en.wikipedia.org/wiki/Bloom_filter#The_union_and_intersection_of_sets
+func (f *BloomFilter) Union(g *BloomFilter) uint {
+	r := f.Copy()
+	if err := r.Merge(g); err == nil {
+		return r.Count()
+	}
+	return 0
+}
+
+func (f *BloomFilter) Intersection(g *BloomFilter) uint {
+	ff := f.EstimateItems()
+	gg := g.EstimateItems()
+	return ff + gg - f.Union(g)
 }
 
 // TestAndAddString is the equivalent to calling Test(string) then Add(string).
