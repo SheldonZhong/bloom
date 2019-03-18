@@ -257,6 +257,9 @@ func (f *BloomFilter) Union(g *BloomFilter) uint {
 func (f *BloomFilter) Intersection(g *BloomFilter) uint {
 	ff := f.EstimateItems()
 	gg := g.EstimateItems()
+	if ff+gg < f.Union(g) {
+		return 0
+	}
 	return ff + gg - f.Union(g)
 }
 
