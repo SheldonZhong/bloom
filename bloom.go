@@ -260,6 +260,12 @@ func (f *BloomFilter) Intersection(g *BloomFilter) uint {
 	return ff + gg - f.Union(g)
 }
 
+func (f *BloomFilter) Difference(g *BloomFilter) uint {
+	ff := f.EstimateItems()
+	gg := g.EstimateItems()
+	return 2*f.Union(g) - ff - gg
+}
+
 // TestAndAddString is the equivalent to calling Test(string) then Add(string).
 // Returns the result of Test.
 func (f *BloomFilter) TestAndAddString(data string) bool {
