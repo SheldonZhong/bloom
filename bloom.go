@@ -249,7 +249,7 @@ func (f *BloomFilter) EstimateItems() uint {
 func (f *BloomFilter) Union(g *BloomFilter) uint {
 	r := f.Copy()
 	if err := r.Merge(g); err == nil {
-		return r.Count()
+		return r.EstimateItems()
 	}
 	return 0
 }
@@ -266,6 +266,9 @@ func (f *BloomFilter) Intersection(g *BloomFilter) uint {
 func (f *BloomFilter) Difference(g *BloomFilter) uint {
 	ff := f.EstimateItems()
 	gg := g.EstimateItems()
+	if 2*f.Union(g) < ff + gg {
+		return 0
+	}
 	return 2*f.Union(g) - ff - gg
 }
 
